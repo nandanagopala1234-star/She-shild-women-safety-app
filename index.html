@@ -1,0 +1,137 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:assets_audio_player/assets_audio_player.dart';
+
+void main() {
+  runApp(SheShieldApp());
+}
+
+class SheShieldApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'She Shield',
+      theme: ThemeData(
+        primaryColor: Colors.purple,
+        scaffoldBackgroundColor: Colors.white,
+      ),
+      home: HomeScreen(),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  final player = AssetsAudioPlayer();
+
+  _sendSOSMessage() async {
+    Position pos = await Geolocator.getCurrentPosition();
+    String message =
+        "I am in danger! Please help!\nLocation: https://maps.google.com/?q=${pos.latitude},${pos.longitude}";
+    String phone = "tel:100"; // Set emergency contact
+    await launch("sms:?body=$message");
+    await launch(phone);
+  }
+
+  _playSiren() {
+    AssetsAudioPlayer.newPlayer().open(
+      Audio("assets/siren.mp3"),
+      autoStart: true,
+      showNotification: false,
+    );
+  }
+
+  _fakeCall() async {
+    await launch("tel:1234567890");
+  }
+
+  _openSafetyTips(context) {
+    Navigator.push(
+        context, MaterialPageRoute(builder: (_) => SafetyTipsScreen()));
+  }
+
+  _callEmergency() async {
+    const number = "tel:112"; // Police / Universal emergency no.
+    await launch(number);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("She Shield - Women Safety"),
+        backgroundColor: Colors.purple,
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(18.0),
+        child: GridView.count(
+          crossAxisCount: 2,
+          children: [
+            FeatureButton("SOS Alert", Icons.warning, Colors.red, _sendSOSMessage),
+            FeatureButton("Siren", Icons.speaker, Colors.orange, _playSiren),
+            FeatureButton("Fake Call", Icons.phone_callback, Colors.blue, _fakeCall),
+            FeatureButton("Emergency Call", Icons.call, Colors.green, _callEmergency),
+            FeatureButton("Safety Tips", Icons.shield, Colors.purple, () => _openSafetyTips(context)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class FeatureButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final Function action;
+
+  FeatureButton(this.label, this.icon, this.color, this.action);
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => action(),
+      child: Card(
+        color: color.withOpacity(.8),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: Colors.white, size: 40),
+              SizedBox(height: 10),
+              Text(label, style: TextStyle(color: Colors.white, fontSize: 16)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SafetyTipsScreen extends StatelessWidget {
+  final tips = [
+    "Stay in well-lit public places.",
+    "Share your location with trusted contacts.",
+    "Avoid being distracted by your phone in unknown areas.",
+    "Trust your instincts and ask for help if uncomfortable.",
+    "Keep emergency numbers saved.",
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Safety Tips"),
+        backgroundColor: Colors.purple,
+      ),
+      body: ListView.builder(
+        itemCount: tips.length,
+        itemBuilder: (_, i) => ListTile(
+          leading: Icon(Icons.check, color: Colors.green),
+          title: Text(tips[i]),
+        ),
+      ),
+    );
+  }
+}
